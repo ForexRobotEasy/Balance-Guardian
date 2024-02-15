@@ -1,0 +1,90 @@
+
+//+------------------------------------------------------------------+
+//|                                              Balance Guardian.mq5 |
+//|                        Copyright 2021, Forex Robot Easy Team     |
+//|                                                 forexroboteasy.com |
+//+------------------------------------------------------------------+
+
+// Global variables
+input double profitTarget = 100.0;       // Profit target in account currency
+input double maxLossTarget = 50.0;       // Maximum loss target in account currency
+bool balanceGuardianActive = true;       // Balance Guardian activation flag
+
+//+------------------------------------------------------------------+
+//| Check if profit or loss targets are hit and take necessary actions |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+    // Check if profit target is hit
+    if (balanceGuardianActive && AccountProfit() >= profitTarget)
+    {
+        CloseAllTrades();
+        DeactivateExpertAdvisors();
+        balanceGuardianActive = false;
+        Print('Profit target hit. Balance Guardian deactivated.');
+    }
+    
+    // Check if maximum loss target is hit
+    if (balanceGuardianActive && AccountLoss() >= maxLossTarget)
+    {
+        CloseAllTrades();
+        DeactivateExpertAdvisors();
+        balanceGuardianActive = false;
+        Print('Maximum loss target hit. Balance Guardian deactivated.');
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Close all open trades                                             |
+//+------------------------------------------------------------------+
+void CloseAllTrades()
+{
+    int total = OrdersTotal();
+    for (int i = total - 1; i >= 0; i--)
+    {
+        if (OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
+        {
+            if (OrderClose(OrderTicket(), OrderLots(), MarketInfo(OrderSymbol(), MODE_BID), 0, clrRed))
+                Print('Trade closed: ', OrderTicket());
+            else
+                Print('Failed to close trade: ', OrderTicket());
+        }
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Deactivate all Expert Advisors                                    |
+//+------------------------------------------------------------------+
+void DeactivateExpertAdvisors()
+{
+    ExpertRemove();
+    Print('Expert Advisors deactivated.');
+}
+
+//+------------------------------------------------------------------+
+//| Expert initialization function                                    |
+//+------------------------------------------------------------------+
+void OnInit()
+{
+    // Set up initial balance
+    double initialBalance = AccountBalance();
+    Print('Initial account balance: ', initialBalance);
+}
+
+//+------------------------------------------------------------------+
+//| Expert deinitialization function                                  |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+    // Print reason for deinitialization
+    Print('Expert deinitialized. Reason: ', reason);
+}
+
+//+------------------------------------------------------------------+
+//| Expert start function                                             |
+//+------------------------------------------------------------------+
+void OnStart()
+{
+    // Print start message
+    Print('Expert started.');
+}
